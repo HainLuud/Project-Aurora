@@ -14,6 +14,7 @@ class ThreeDayPrediction:
     times = ["02:00 - 05:00", "05:00 - 08:00", "20:00 - 23:00", "23:00 - 02:00"]
     forecasts = [self.forecastToday, self.forecastTomorrow, self.forecastTheDayAfterTomorrow]
     message = []
+    positiveForecast = False
 
     for i, forecast in enumerate(forecasts):
 
@@ -22,5 +23,5 @@ class ThreeDayPrediction:
         if forecast[j] >= significanceThreshold:
           message.append(days[i] + times[j] + " Tugevusega " + forecast[j])
 
-    return message
+    return message, positiveForecast
 
