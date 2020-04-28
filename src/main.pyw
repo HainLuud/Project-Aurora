@@ -1,8 +1,12 @@
-import sys 
+import os, sys 
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 from PyQt5.QtGui import QIcon
 import ThreeDayPrediction
 import time
+import pathlib
+
+scriptPath = pathlib.Path(__file__).parent.absolute()
+imageFolderPath = os.path.join(scriptPath, '..', 'Images')
 
 def retrieveForecast():
     import requests, ThreeDayPrediction
@@ -31,7 +35,8 @@ def notify(message):
 
     if message == []:
         toaster.show_toast("Virmalisi pole :'( ", " ", 
-        icon_path="Images\\toastLogo.ico", threaded=True)
+        icon_path=os.path.join(imageFolderPath,'toastLogo.ico'), 
+        threaded=True)
 
     else:
         longMessage = []
@@ -52,10 +57,9 @@ def checkForecast(scheduler):
         except:
             pass 
 
-
 app = QApplication(sys.argv)
 
-trayIcon = QSystemTrayIcon(QIcon('Images\\trayLogo.png'), parent=app)
+trayIcon = QSystemTrayIcon(QIcon(os.path.join(imageFolderPath,'trayLogo.png')), parent=app)
 trayIcon.setToolTip("Aurora Forecast")
 trayIcon.show()
 
