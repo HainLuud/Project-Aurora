@@ -1,80 +1,12 @@
-import os, sys 
-from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu
-from PyQt5.QtGui import QIcon
-import ThreeDayPrediction
-import time
-import pathlib
+import os, sys, pathlib, functions
 
 scriptPath = pathlib.Path(__file__).parent.absolute()
 imageFolderPath = os.path.join(scriptPath, '..', 'Images')
 
-def retrieveForecast():
-    import requests, ThreeDayPrediction
-
-    request = requests.get("https://services.swpc.noaa.gov/text/3-day-forecast.txt")
-
-    if request.status_code != requests.codes.ok:
-        return "ERROR. Website not accessible"
-
-    text = request.text.strip().split("\n")
-
-    # Relevant times = [UTC 00-03, UTC 03-06, UTC 18-21, UTC 21-00]
-    relevantTimes = [text[14], text[15], text[20], text[21]]
-    KpIndexes = []
-    
-    for timeLine in relevantTimes:
-        KpIndexes.append(timeLine.replace(" ", "")[-3:])
-
-    forecast = ThreeDayPrediction.ThreeDayPrediction([int(x[0]) for x in KpIndexes], [int(x[1]) for x in KpIndexes], [int(x[2]) for x in KpIndexes])
-
-    return forecast
-
-def notify(message):
-    from win10toast import ToastNotifier
-    toaster = ToastNotifier()
-
-    if message == []:
-        toaster.show_toast("Virmalisi pole :'( ", " ", 
-        icon_path=os.path.join(imageFolderPath,'toastLogo.ico'), 
-        threaded=True)
-
-    else:
-        longMessage = []
-        for text in message: longMessage += text + "\n"
-        toaster.show_toast("Virmaliste Hoiatus!", longMessage)
-
-def checkForecast(scheduler):
-    forecast = retrieveForecast()
-    message, positiveForecast = forecast.analyzeForecasts()
-
-    # If there is a positive forecast and the current time is past 6PM
-    if positiveForecast and time.localtime()[3] > 18:
-        # Should substitute with modifyable value
-        scheduler.add_job(notify, 'interval', minutes=30, kwargs={"message":message}, id='positiveForecastJob')
-    else:
-        try:
-            scheduler.remove_job('positiveForecastJob')
-        except:
-            pass 
-
-app = QApplication(sys.argv)
-
-trayIcon = QSystemTrayIcon(QIcon(os.path.join(imageFolderPath,'trayLogo.png')), parent=app)
-trayIcon.setToolTip("Aurora Forecast")
-trayIcon.show()
-
-# Create menu
-menu = QMenu()
-exitAction = menu.addAction('Exit')
-exitAction.triggered.connect(app.quit)
-
-# Add right-click menu to systemtray icon
-trayIcon.setContextMenu(menu)
-
 # Make initial toast message
-forecast = retrieveForecast()
+forecast = functions.retrieveForecast()
 message, positiveForecast = forecast.analyzeForecasts()
-notify(message)
+#functions.notify(message)
 
 # Documentation: https://apscheduler.readthedocs.io/en/v3.6.3/index.html
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -82,7 +14,47 @@ scheduler = BackgroundScheduler()
 scheduler.start()
 
 # Every 45 minutes check the forecast
-scheduler.add_job(checkForecast, 'interval', id="RegularCheck", minutes=30, kwargs={"scheduler":scheduler})
+scheduler.add_job(functions.checkForecast, 'interval', id="0", minutes=45, kwargs={"scheduler":scheduler})
+
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+from MainWindow import Ui_MainWindow
+
+class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+    def __init__(self, *args, obj=None, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
+        self.setupUi(self, scheduler)
+
+class TrayWidget(QtWidgets.QSystemTrayIcon):
+    def __init__(self, icon, parent=None):
+        QtWidgets.QSystemTrayIcon.__init__(self, icon, parent)
+
+        # Add right-click menu for tray icon
+        menu = QtWidgets.QMenu(parent)
+        resumeAction = menu.addAction("Resume")
+        resumeAction.triggered.connect(lambda: functions.resume(scheduler))
+        pauseAction = menu.addAction("Pause")
+        pauseAction.triggered.connect(lambda: functions.pause(scheduler))
+        exitAction = menu.addAction("Exit")
+        exitAction.triggered.connect(app.quit)
+
+        self.setContextMenu(menu)
+        self.setToolTip("Aurora Forecast")
+    
+        # Add left-click on icon -> MainWindow open action
+        self.activated.connect(self.launchWindow)
+        
+
+    def launchWindow(self, reason):
+        if reason == self.Trigger:
+            self.window = MainWindow()
+            self.window.show()
+            
+app = QtWidgets.QApplication(sys.argv)
+app.setQuitOnLastWindowClosed(False)
+w = QtWidgets.QWidget()
+tray_widget = TrayWidget(QtGui.QIcon(os.path.join(imageFolderPath,'trayLogo.png')), w)
+tray_widget.show()
 
 # Wait for app to say, that it wants to exit
 sys.exit(app.exec_())
