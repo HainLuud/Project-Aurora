@@ -15,7 +15,7 @@ class Ui_MainWindow(object):
         # Set up same scheduler that was started in main
         self.scheduler = scheduler
 
-        MainWindow.setObjectName("MainWindow")
+        MainWindow.setObjectName("Aurora Forecast")
         MainWindow.resize(775, 451)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")

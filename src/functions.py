@@ -19,7 +19,6 @@ def retrieveForecast():
 
     return forecast
 
-
 def checkForecast(scheduler):
     import time
     forecast = retrieveForecast()

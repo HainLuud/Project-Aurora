@@ -33,3 +33,13 @@ auroraStartupFile.close()
 # Move batch file to startup folder
 startupfolderPath = os.path.join("C:" + os.sep, "Users", user, "Appdata", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
 os.rename(os.path.join(scriptPath, "auroraStartup.bat"), os.path.join(startupfolderPath, "auroraStartup.bat"))
+
+# Make a toast that install complete
+from win10toast import ToastNotifier
+import os, pathlib
+
+scriptPath = pathlib.Path(__file__).parent.absolute()
+imageFolderPath = os.path.join(scriptPath, 'Images')
+toaster = ToastNotifier().show_toast("Install complete!", " ", 
+icon_path=os.path.join(imageFolderPath,'toastLogo.ico'), 
+threaded=True)

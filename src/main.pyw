@@ -1,4 +1,9 @@
-import os, sys, pathlib, functions
+import os, sys, pathlib, functions, ctypes
+
+# Tell WIndows, that this .pyw is hosting other applications and is not an application in itselt 
+# (a workaround to get the Window icon to display correctly)
+myappid = u'HainProductions.AuroraForecaster.vestion=1.0' # arbitrary string
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 scriptPath = pathlib.Path(__file__).parent.absolute()
 imageFolderPath = os.path.join(scriptPath, '..', 'Images')
@@ -6,7 +11,7 @@ imageFolderPath = os.path.join(scriptPath, '..', 'Images')
 # Make initial toast message
 forecast = functions.retrieveForecast()
 message, positiveForecast = forecast.analyzeForecasts()
-#functions.notify(message)
+functions.notify(message)
 
 # Documentation: https://apscheduler.readthedocs.io/en/v3.6.3/index.html
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -48,10 +53,12 @@ class TrayWidget(QtWidgets.QSystemTrayIcon):
     def launchWindow(self, reason):
         if reason == self.Trigger:
             self.window = MainWindow()
+            self.window.setWindowTitle("Aurora Forecast Logic")
             self.window.show()
             
 app = QtWidgets.QApplication(sys.argv)
 app.setQuitOnLastWindowClosed(False)
+app.setWindowIcon(QtGui.QIcon(os.path.join(imageFolderPath,'trayLogo.png')))
 w = QtWidgets.QWidget()
 tray_widget = TrayWidget(QtGui.QIcon(os.path.join(imageFolderPath,'trayLogo.png')), w)
 tray_widget.show()
