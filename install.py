@@ -11,7 +11,7 @@ for requrement in requrements:
     subprocess.check_call([sys.executable, "-m", "pip", "install", requrement])
 
 # Start the program
-os.startfile(os.path.join(scriptPath, "main.pyw"))
+os.startfile(os.path.join(scriptPath, "src", "main.pyw"))
 
 # Extract path of python.exe
 pythonPath = sys.path[1].split("\\")

@@ -241,6 +241,9 @@ class Ui_MainWindow(object):
 
         print("After removing:", self.scheduler.get_jobs())
 
+    #def saveRules(self):
+    #    import os
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))

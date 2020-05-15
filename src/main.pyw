@@ -22,6 +22,7 @@ scheduler.start()
 scheduler.add_job(functions.checkForecast, 'interval', id="0", minutes=45, kwargs={"scheduler":scheduler})
 
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 from MainWindow import Ui_MainWindow
 
