@@ -11,9 +11,11 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class Ui_MainWindow(object):
-    def setupUi(self, MainWindow, scheduler):
+    def setupUi(self, MainWindow, logic):
         # Set up same scheduler that was started in main
-        self.scheduler = scheduler
+        self.logic = logic
+        self.scheduler = logic.scheduler
+        self.jobs = logic.idAndJob
 
         MainWindow.setObjectName("Aurora Forecast")
         MainWindow.resize(775, 451)
@@ -131,17 +133,16 @@ class Ui_MainWindow(object):
         self.label.setFont(font)
         self.label.setObjectName("label")
 
-        #####################
+        #####################                    
         self.formLayout = QtWidgets.QFormLayout()
         self.groupBox = QtWidgets.QGroupBox()
-        # dict(jobId : rowNumberinForm)
-        self.rulesAndRows = dict()
-        
-        logicLabel = QtWidgets.QLabel("ID: 0\t\tNotify me every 45 minutes")
-        logicButton = QtWidgets.QPushButton("Delete")
-        logicButton.clicked.connect(lambda: self.deleteRule("0"))
-        self.rulesAndRows["0"] = 0 
-        self.formLayout.addRow(logicButton, logicLabel)
+
+        # jobIDsAndRows = {job.id : Row nr}
+        self.jobIDsAndRows = logic.jobIDsAndRows
+
+        # Populate scroll area with currently running jobs
+        for jobID, row in sorted(self.jobIDsAndRows.items(), key=lambda x: x[1]):
+            self.addRuleToScrollArea(jobID, logic.printableRules[jobID], True)
 
         self.groupBox.setLayout(self.formLayout)
         #############
@@ -176,7 +177,7 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def addLogicRule(self):
-        import functions, random
+        import functions
         #Todo: Lisa check, et ei oleks üle 100 reegli
 
         newID = str(self.generateNewId())  
@@ -184,41 +185,38 @@ class Ui_MainWindow(object):
         # Create cron rule ("on")
         if (self.radioButton.isChecked()):
 
-            day = str(self.comboBox.currentText())[:3].lower()
+            day = str(self.comboBox.currentText())
             hour = int(self.timeEdit.time().hour())
             minute = int(self.timeEdit.time().minute())
-            self.scheduler.add_job(functions.checkForecast, 'cron', id=newID, day_of_week=day, hour=hour, minute=minute, kwargs={"scheduler":self.scheduler})
-        
+            
+            printableText= self.logic.addJob(newID, 'cron', self.formLayout.rowCount(), day=day, hour=hour, minute=minute)
+
         # Create interval rule ("every")
         else:
             
             time = str(self.comboBox_2.currentText())
             val = int(self.spinBox.value())
-            
-            if (time == "hours"):
-                self.scheduler.add_job(functions.checkForecast, 'interval', id=newID, hours=val, kwargs={"scheduler":self.scheduler})
-            elif (time == "minutes"):
-                self.scheduler.add_job(functions.checkForecast, 'interval', id=newID, minutes=val, kwargs={"scheduler":self.scheduler})
-            else:
-                self.scheduler.add_job(functions.checkForecast, 'interval', id=newID, seconds=val, kwargs={"scheduler":self.scheduler})
-        
-        self.addRuleToScrollArea(newID)
 
+            printableText = self.logic.addJob(newID, 'interval', self.formLayout.rowCount(), freqMeasure=time, freqValue=val)
+        
+        self.addRuleToScrollArea(newID, printableText)
+        
         print(self.scheduler.get_jobs())
         print(self.scheduler.print_jobs())
 
-    def addRuleToScrollArea(self, id):
-   
-        if (self.radioButton.isChecked()):
-            logicLabel = QtWidgets.QLabel("ID: {}\t\tNotify me on {} at {}:{}".format(id, self.comboBox.currentText(), self.timeEdit.time().hour(), self.timeEdit.time().minute()))
-        else:
-            logicLabel = QtWidgets.QLabel("ID: {}\t\tNotify me every {} {}".format(id, self.spinBox.value(), self.comboBox_2.currentText()))
+    def addRuleToScrollArea(self, id, printableText, initial=False):
 
         logicButton = QtWidgets.QPushButton("Delete")
         logicButton.clicked.connect(lambda: self.deleteRule(id))
 
-        self.rulesAndRows[id] = self.formLayout.rowCount()
+        logicLabel = QtWidgets.QLabel(printableText)
+        
         self.formLayout.addRow(logicButton, logicLabel)
+    
+    def deleteRule(self, id):
+        currentLastIndex = self.formLayout.rowCount() - 1
+        self.formLayout.removeRow(self.jobIDsAndRows[id])
+        self.logic.deleteRule(id, currentLastIndex)
 
     def generateNewId(self):
         for i in range(99):
@@ -228,21 +226,6 @@ class Ui_MainWindow(object):
                     taken = True
             if not taken:
                 return i
-    
-    def deleteRule(self, id):
-        self.scheduler.remove_job(id)
-
-        if (self.rulesAndRows[id] != self.formLayout.rowCount() - 1):
-            for job in self.scheduler.get_jobs():
-                if int(self.rulesAndRows[job.id]) > int(self.rulesAndRows[id]):
-                    self.rulesAndRows[job.id] -= 1
-        
-        self.formLayout.removeRow(self.rulesAndRows[id])
-
-        print("After removing:", self.scheduler.get_jobs())
-
-    #def saveRules(self):
-    #    import os
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate

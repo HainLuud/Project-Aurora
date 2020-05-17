@@ -1,4 +1,5 @@
 import os, sys, pathlib, functions, ctypes
+import Logic
 
 # Tell WIndows, that this .pyw is hosting other applications and is not an application in itselt 
 # (a workaround to get the Window icon to display correctly)
@@ -13,23 +14,15 @@ forecast = functions.retrieveForecast()
 message, positiveForecast = forecast.analyzeForecasts()
 functions.notify(message)
 
-# Documentation: https://apscheduler.readthedocs.io/en/v3.6.3/index.html
-from apscheduler.schedulers.background import BackgroundScheduler
-scheduler = BackgroundScheduler()
-scheduler.start()
-
-# Every 45 minutes check the forecast
-scheduler.add_job(functions.checkForecast, 'interval', id="0", minutes=45, kwargs={"scheduler":scheduler})
-
-
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 from MainWindow import Ui_MainWindow
+
+logic = Logic.Logic()
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, *args, obj=None, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
-        self.setupUi(self, scheduler)
+        self.setupUi(self, logic)
 
 class TrayWidget(QtWidgets.QSystemTrayIcon):
     def __init__(self, icon, parent=None):
@@ -38,9 +31,9 @@ class TrayWidget(QtWidgets.QSystemTrayIcon):
         # Add right-click menu for tray icon
         menu = QtWidgets.QMenu(parent)
         resumeAction = menu.addAction("Resume")
-        resumeAction.triggered.connect(lambda: functions.resume(scheduler))
+        resumeAction.triggered.connect(lambda: functions.resume(logic.scheduler))
         pauseAction = menu.addAction("Pause")
-        pauseAction.triggered.connect(lambda: functions.pause(scheduler))
+        pauseAction.triggered.connect(lambda: functions.pause(logic.scheduler))
         exitAction = menu.addAction("Exit")
         exitAction.triggered.connect(app.quit)
 
