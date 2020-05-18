@@ -196,7 +196,9 @@ class Ui_MainWindow(object):
             
             time = str(self.comboBox_2.currentText())
             val = int(self.spinBox.value())
-            if time == 0:
+            
+            # If the interval given is 0
+            if val == 0:
                 return
 
             printableText = self.logic.addJob(newID, 'interval', self.formLayout.rowCount(), freqMeasure=time, freqValue=val)
