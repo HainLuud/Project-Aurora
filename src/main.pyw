@@ -3,7 +3,7 @@ import Logic
 
 # Tell WIndows, that this .pyw is hosting other applications and is not an application in itselt 
 # (a workaround to get the Window icon to display correctly)
-myappid = u'HainProductions.AuroraForecaster.vestion=1.0' # arbitrary string
+myappid = u'HainProductions.AuroraForecaster.vestion=1.1' # arbitrary string
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 scriptPath = pathlib.Path(__file__).parent.absolute()
@@ -11,7 +11,7 @@ imageFolderPath = os.path.join(scriptPath, '..', 'Images')
 
 # Make initial toast message
 forecast = functions.retrieveForecast()
-message, positiveForecast = forecast.analyzeForecasts()
+message = forecast.analyzeForecasts()
 functions.notify(message)
 
 from PyQt5 import QtCore, QtGui, QtWidgets
